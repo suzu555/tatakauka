@@ -1,2 +1,2 @@
 # tatakauka
-javascript alexa
+javascript alexa node.js
