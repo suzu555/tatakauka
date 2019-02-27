@@ -74,7 +74,23 @@ const GetNewFactHandler = {
             .getResponse(); //getResponse()‚ÅAo—ˆã‚ª‚Á‚½ƒŒƒXƒ|ƒ“ƒX‚ğæ“¾‚µ‚ÄAƒnƒ“ƒhƒ‰‚Ì–ß‚è’l‚Æ‚µ‚Äg—p‚µ‚Ü‚·B
     },
 };
+//©ìŠÖ”‚ÌƒƒCƒ“‚Ì–{‘è‚ğ’‚éŠÖ”
+const DanjonSpeakHandler = {
+    canHandle(handlerInput) { //ƒgƒ‹[‚ğ•Ô‚·‚Ì
+        const request = handlerInput.requestEnvelope.request; //ƒnƒ“ƒhƒ‰[‚ÌŠÂ‹«•Ï”‚Ì‘©‚ğ•Ô‚·AƒŠƒNƒGƒXƒg‚É“ü‚ê‚é
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'orderIntent';
+    },
+    handle(handlerInput) { //’‚éˆ×‚ÌÀsŠÖ”
+        const speechOutput = "ƒ_ƒ“ƒWƒ‡ƒ“‚ğn‚ß‚æ‚¤"; //•¶š‚ğ¬‚º‚Ä’‚é•¶š‚ğì‚é
 
+        return handlerInput.responseBuilder //‰½‚©‚ğ¶¬Aƒrƒ‹ƒ_[‚·‚é
+            .speak(speechOutput) //’‚ç‚¹‚é
+            .withSimpleCard("danjon", "danjon") //•¶š‚ğ‰æ–Ê‚Éo‚·
+            .reprompt(HELP_REPROMPT) //reprompt()‚Å‚ÍAƒ†[ƒU[‚©‚ç‚Ì•Ô–‚ª‚È‚©‚Á‚½‚Ì”­˜b‚ğw’è‚Å‚«‚Ü‚·B
+            .getResponse(); //getResponse()‚ÅAo—ˆã‚ª‚Á‚½ƒŒƒXƒ|ƒ“ƒX‚ğæ“¾‚µ‚ÄAƒnƒ“ƒhƒ‰‚Ì–ß‚è’l‚Æ‚µ‚Äg—p‚µ‚Ü‚·B
+    },
+};
 const HelpHandler = { //ƒwƒ‹ƒvŠÖ”ƒnƒ“ƒhƒ‰[
     canHandle(handlerInput) { //1‚ğ•Ô‚·‚ñ‚¾
         const request = handlerInput.requestEnvelope.request; //’l‚Ìæ‚èo‚µ
@@ -151,6 +167,7 @@ const skillBuilder = Alexa.SkillBuilders.custom(); //SkillBuilder‚ÍƒXƒLƒ‹‚Ìì¬
 exports.handler = skillBuilder //‚Ü‚¸AŒÄ‚Ño‚³‚ê‚é‘¤‚Ìƒtƒ@ƒCƒ‹‚ÅAƒ‚ƒWƒ…[ƒ‹‰»‚·‚é’l‚âƒIƒuƒWƒFƒNƒg‚ğexports‚µ‚Ä‚¨‚­B‚»‚¤‚·‚é‚±‚Æ‚ÅA‚»‚Ì’l‚âƒIƒuƒWƒFƒNƒg‚ÉŠO•”‚©‚çƒAƒNƒZƒX‚·‚é‚±‚Æ‚ª‰Â”\‚É‚È‚éB
     .addRequestHandlers( //(•W€ˆ—‚Ì’Ç‰Á)
         GetNewFactHandler, //©ìŠÖ”‚¶‚á‚ËH
+        DanjonSpeakHandler, //©ìŠÖ”
         HelpHandler, //ƒwƒ‹ƒvŠÖ”‚Ìo—Í
         ExitHandler, //I—¹ŠÖ”‚Ìo—Í
         FallbackHandler, //Å‚à—Dæ‡ˆÊ‚Ì’á‚¢ƒŠƒNƒGƒXƒgƒnƒ“ƒhƒ‰
