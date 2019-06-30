@@ -1,4 +1,4 @@
-﻿// This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK (v2).
+// This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK (v2).
 // Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
 // session persistence, api calls, and more.
 //このサンプルは、Alexa Skills Kit SDK（v2）を使用してAlexaのスキルからインテントを処理する方法を示します。
@@ -22,6 +22,15 @@ const HELP_REPROMPT = "戦うかをどうしますか？";
 //「TODO: ここから下のデータを自分用にカスタマイズしてください。」
 //=========================================================================================================================================
 const data = [
+    "遊びに来てたらダンジョンに入りました、ダンジョンは長かったので、友達はいなくなってました。",
+    "ダンジョンを作ったのに会いたい、そう思ってました、帰れませんでした。",
+    "ここで勝つとありました、どんなに勝ってもダンジョンでした、そう、ダンジョンは洞窟で、人を飲み込み自慢できませんでした、皆いない。",
+    "ダンジョンがあると聞きました、人生がダンジョンでした、デビョンで出落ちでした。",
+    "永劫ダンジョン、そんな希望がありました、今は、スミスです。",
+    "ダンジョンはある、どこまでも、そう、作る奴がいるからだ。",
+    "ダンジョンで寝てたら、ダンジョンが動いてた、そこは迷路だった、そう、モンスターばかり。",
+    "ダンジョンがあるのは希望だからです、主の。",
+    "ダンジョンの永劫は続く、何処までも暗い闇の様に。",
     "現在ダンジョンを作成中です。",
     "遠きダンジョンは今作成中です。",
     "ダンジョンメーカーです。",
