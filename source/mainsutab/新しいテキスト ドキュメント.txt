@@ -1,0 +1,273 @@
+﻿// This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK (v2).
+// Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
+// session persistence, api calls, and more.
+//このサンプルは、Alexa Skills Kit SDK（v2）を使用してAlexaのスキルからインテントを処理する方法を示します。
+//スロットの実装、ダイアログ管理に関するその他の例については、https：//alexa.design/cookbookをご覧ください。
+//セッションの持続性、API呼び出しなど。
+const Alexa = require('ask-sdk-core'); //一般的にモジュール化されたJavaScriptファイルを読み込むために用いられます。
+
+//=========================================================================================================================================
+//TODO: このコメント行より下の項目に注目してください。ウィザードリーを目指して、2.5D
+//=========================================================================================================================================
+const SKILL_NAME = "戦うか";
+const GET_FACT_MESSAGE = "戦うかの言葉は、";
+const HELP_MESSAGE = "戦うかを聞きたい時は「ダンジョンを始めよう」と、終わりたい時は「おしまい」と言ってください。どうしますか？";
+const HELP_REPROMPT = "戦うかをどうしますか？";
+//const FALLBACK_MESSAGE = "それについてはわかりません。戦うかを聞きたい時は「ダンジョンを始めよう」と、終わりたい時は「おしまい」と言ってください。どうしますか？";
+//const FALLBACK_REPROMPT = "戦うかをどうしますか？";
+//const STOP_MESSAGE = "グッバイ";
+//const DANJON_START = "ダンジョンを始めよう";
+
+//=========================================================================================================================================
+//「TODO: ここから下のデータを自分用にカスタマイズしてください。」
+//=========================================================================================================================================
+const data = [
+    "現在ダンジョンを作成中です。",
+    "遠きダンジョンは今作成中です。",
+    "ダンジョンメーカーです。",
+    "ダンジョンは遠きに及ばず人の流れを遠くに見る。",
+    "現在のダンジョンは何処にもないですが今作成してます。",
+    "ダンジョンは下に潜ると思いますが上にも上り遠くできます。",
+    "城の様なダンジョンは何処までも延び、地下ダンジョンは星の大きさです。",
+    "地下ダンジョンも異次元使えばデカいです。",
+    "地平線は遠き、ダンジョンは森の中、其処がダンジョンとは気付かず、迷路。",
+    "迷路なんて易いと思ってました、其処がダンジョンでした。",
+    "ダンジョンが無かった、ダンジョンに入ってたら途中で帰ってた。",
+    "ダンジョンは続く、人も続く、モンスターは居る。"
+];
+
+const data_2 = [
+    "ディーラーゴブリン",
+    "ナイトゴブリン",
+    "ドッグフッドゴブリン",
+    "ピローゴブリン",
+    "スミスゴブリン",
+    "エルダーゴブリン",
+    "ウィザードゴブリン",
+    "スパイゴブリン",
+    "シールドゴブリン",
+    "モンクゴブリン",
+    "ゴブリンキング",
+    "レンジャーゴブリン",
+    "アーチャーゴブリン",
+    "ソルジャーゴブリン",
+    "エリートゴブリン",
+    "ホブゴブリン",
+    "オーバーロード",
+    "ゴブリン",
+    "スライム"
+];
+//=========================================================================================================================================
+//「TODO: ここから下は変数の初期化」
+//=========================================================================================================================================
+var setteki = 0;
+var dameji = 0;
+var hp = 20;
+var tekiname = "居ないよ";
+//=========================================================================================================================================
+//この行から下のコードに変更を加えると、スキルが動作しなくなるかもしれません。わかる人のみ変更を加えてください。  
+//=========================================================================================================================================
+function getRandomItem(arrayOfItems) { //アイテムの順番列コンテナの乱数で取り出し関数
+    // can take an array, or a dictionary
+    if (Array.isArray(arrayOfItems)) { //配列の場合はトルー、オブジェクトはフェールス
+      // the argument is an array []
+      let i = 0; //let 文はブロックスコープの局所変数を宣言します。任意で値を代入して初期化できます。
+      i = Math.floor(Math.random() * arrayOfItems.length); //アイテム数を0.0-1.0を掛けて計算し整数を取り出しiに入れる
+      return (arrayOfItems[i]); //アレイのアイテムのiが0からアレイアイテムの数のどれかを返す
+    }
+
+    if (typeof arrayOfItems === 'object') { //typeof 演算子はデータ型を示す文字列を返しますが、大きなひとくくりとしての型なので厳密な型判定ができないのはご存知だと思います。//｛｝書きの？オブジェクトが来た場合、ネームプロパティを読み、上の条件式を使い、メッセージを出す
+      // argument is object, treat as dictionary
+      const result = {}; //何か作った
+      const key = this.getRandomItem(Object.keys(arrayOfItems)); //Object.keys() メソッドは、指定されたオブジェクトが持つ names プロパティの配列を、通常のループで取得するのと同じ順序で返します。そして、此の関数のランダムに送り付ける
+      result[key] = arrayOfItems[key]; //resultにアレイアイテムのメッセージを入れる 
+      return result; //メッセージを返す
+    }
+    // not an array or object, so just return the input
+    return arrayOfItems; //何も無いならアレイのアイテムを入れる
+}
+//自作関数のメインの本題を喋る関数
+const GetNewFactHandler = {
+    canHandle(handlerInput) { //トルーを返すの
+      const request = handlerInput.requestEnvelope.request; //ハンドラーの環境変数の束を返す、リクエストに入れる
+      return request.type === 'LaunchRequest' //1を返してくれ
+        || (request.type === 'IntentRequest' //1を返してくれ
+          && request.intent.name === 'GetNewFactIntent'); //1を返してくれ
+    },
+    handle(handlerInput) { //喋る為の実行関数
+      const randomFact = getRandomItem(data); //メッセージデータを変数に入れる
+      const speechOutput = GET_FACT_MESSAGE + randomFact; //文字を混ぜて喋る文字を作る
+  
+      return handlerInput.responseBuilder //何かを生成、ビルダーする
+        .speak(speechOutput) //喋らせる
+        .withSimpleCard(SKILL_NAME, randomFact) //文字を画面に出す
+        .reprompt(HELP_REPROMPT) //reprompt()では、ユーザーからの返事がなかった時の発話を指定できます。
+        .getResponse(); //getResponse()で、出来上がったレスポンスを取得して、ハンドラの戻り値として使用します。
+    },
+};
+//自作関数のメインの方向を喋る関数
+const houkoususumuHandler = {
+    canHandle(handlerInput) { //トルーを返すの
+      const request = handlerInput.requestEnvelope.request; //ハンドラーの環境変数の束を返す、リクエストに入れる
+        return  handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'houkouIntent';
+    },
+    handle(handlerInput) { //喋る為の実行関数
+      var houkou = handlerInput.requestEnvelope.request.intent.slots.houkou.value;
+      var hp = 20;
+      const randomFact = getRandomItem(data_2); //メッセージデータを変数に入れる
+      tekiname = randomFact;
+      const speechOutput = houkou + "に進むよ。" + randomFact + "が現れた。"; //文字を混ぜて喋る文字を作る
+      setteki = 1;
+      return handlerInput.responseBuilder //何かを生成、ビルダーする
+        .speak(speechOutput) //喋らせる
+        .withSimpleCard("danjon", "danjon") //文字を画面に出す
+        .reprompt("何する？進むなら方向を右左前後ろね。") //reprompt()では、ユーザーからの返事がなかった時の発話を指定できます。
+        .getResponse(); //getResponse()で、出来上がったレスポンスを取得して、ハンドラの戻り値として使用します。
+    },
+};
+//自作関数のメインの戦いを喋る関数
+const settekityuu = {
+    canHandle(handlerInput) { //トルーを返すの
+      const request = handlerInput.requestEnvelope.request; //ハンドラーの環境変数の束を返す、リクエストに入れる
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'settekiIntent';
+    },
+    handle(handlerInput) { //喋る為の実行関数
+      var kougeki = handlerInput.requestEnvelope.request.intent.slots.settekikougeki.value;
+      const tekidameji = Math.floor(Math.random() * 10);
+      const speechOutput = kougeki + "よ。" + tekidameji + "ダメージ！！" + tekiname + "は攻撃を待っている。"; //文字を混ぜて喋る文字を作る
+      dameji = dameji + tekidameji;
+      
+      if(dameji >= hp){
+        return handlerInput.responseBuilder //何かを生成、ビルダーする
+            .speak("倒した！！") //喋らせる
+            .withSimpleCard("danjon", "danjon") //文字を画面に出す
+            .reprompt("何する？進むなら方向を右左前後ろね。") //reprompt()では、ユーザーからの返事がなかった時の発話を指定できます。
+            .getResponse(); //getResponse()で、出来上がったレスポンスを取得して、ハンドラの戻り値として使用します。
+        }else{
+        return handlerInput.responseBuilder //何かを生成、ビルダーする
+            .speak(speechOutput) //喋らせる
+            .withSimpleCard("danjon", "danjon") //文字を画面に出す
+            .reprompt("次の攻撃をしてね、殴れ！！") //reprompt()では、ユーザーからの返事がなかった時の発話を指定できます。
+            .getResponse(); //getResponse()で、出来上がったレスポンスを取得して、ハンドラの戻り値として使用します。
+        }
+    },
+};
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+        const randomFact = getRandomItem(data); //メッセージデータを変数に入れる
+        const speechOutput = GET_FACT_MESSAGE + randomFact; //文字を混ぜて喋る文字を作る
+
+        return handlerInput.responseBuilder
+            .speak(speechOutput)
+            .withSimpleCard(SKILL_NAME, randomFact) //文字を画面に出す
+            .reprompt(HELP_REPROMPT)
+            .getResponse();
+    }
+};
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speechText = '何か、ヘルプですか？ヘルプデスクはダンジョンに在りません、だめだです。';
+
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .reprompt(speechText)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && (handlerInput.requestEnvelope.request.intent.name === 'AMAZON.CancelIntent'
+                || handlerInput.requestEnvelope.request.intent.name === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speechText = 'さよなら！';
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        // Any cleanup logic goes here.//クリーンアップを此処で実行
+        return handlerInput.responseBuilder.getResponse();
+    }
+};
+
+// The intent reflector is used for interaction model testing and debugging.
+// It will simply repeat the intent the user said. You can create custom handlers
+// for your intents by defining them above, then also adding them to the request
+// handler chain below.
+//インテントリフレクタはインタラクションモデルのテストとデバッグに使用されます。
+//それは単にユーザーが言った意図を繰り返すでしょう。 あなたはカスタムハンドラを作成することができます
+//上記のように定義し、それからリクエストに追加することであなたの意図のために
+//以下のハンドラチェーン
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = handlerInput.requestEnvelope.request.intent.name;
+        const speechText = `You just triggered ${intentName}`;
+
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond') //インテント間違ってもプロプントを続けるかどうか
+            .getResponse();
+    }
+};
+
+// Generic error handling to capture any syntax or routing errors. If you receive an error
+// stating the request handler chain is not found, you have not implemented a handler for
+// the intent being invoked or included it in the skill builder below.
+//構文エラーやルーティングエラーをキャプチャするための一般的なエラー処理。 エラーが発生した場合
+//リクエストハンドラチェーンが見つかりません、という理由でハンドラを実装していません
+//呼び出される意図、または以下のスキルビルダーに含まれる意図
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        console.log(`~~~~ Error handled: ${error.message}`);
+        const speechText = `何か分からない理由で動かないです、もう一度`;
+
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .reprompt(speechText)
+            .getResponse();
+    }
+};
+
+// This handler acts as the entry point for your skill, routing all request and response
+// payloads to the handlers above. Make sure any new handlers or interceptors you've
+// defined are included below. The order matters - they're processed top to bottom.
+//このハンドラはスキルのエントリポイントとして機能し、すべてのリクエストとレスポンスをルーティングします。
+//上記のハンドラへのペイロード 新しいハンドラやインターセプタがあることを確認してください。
+//定義済みは以下に含まれます。 順序が重要です - それらは上から下へ処理されます。
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+//自作関数
+        GetNewFactHandler, //貰ったもの関数amazonのスタートサンプルから
+        houkoususumuHandler, //自作関数
+        settekityuu, //自作関数
+//標準関数
+        LaunchRequestHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler) // make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers// IntentReflectorHandlerが最後であることを確認して、カスタムインテントハンドラをオーバーライドしないようにします。
+    .addErrorHandlers(
+        ErrorHandler)
+    .lambda();
